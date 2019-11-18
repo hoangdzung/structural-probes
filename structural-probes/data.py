@@ -271,7 +271,6 @@ class SimpleDataset:
       if len(label_shape) == 1:
         labels[index][:length] = x[1]
       elif len(label_shape) == 2:
-        print(type(labels[index]), type(x[1]))
         labels[index][:length,:length] = x[1]
       else:
         raise ValueError("Labels must be either 1D or 2D right now; got either 0D or >3D")

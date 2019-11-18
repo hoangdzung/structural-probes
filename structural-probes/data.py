@@ -271,6 +271,7 @@ class SimpleDataset:
       if len(label_shape) == 1:
         labels[index][:length] = x[1]
       elif len(label_shape) == 2:
+        print(type(labels[index]), type(x[1]))
         labels[index][:length,:length] = x[1]
       else:
         raise ValueError("Labels must be either 1D or 2D right now; got either 0D or >3D")
@@ -452,7 +453,7 @@ class NodeObservationIterator(Dataset):
     return len(self.observations)
 
   def __getitem__(self, idx):
-    return self.observations[idx], self.observations[idx].length_matrix
+    return self.observations[idx], torch.FloatTensor(self.observations[idx].length_matrix)
 
 class GraphDataset(SimpleDataset):
   def __init__(self, args, task=None, vocab={}):

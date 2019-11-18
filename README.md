@@ -52,6 +52,13 @@ See the [blog post on structural probes](https://nlp.stanford.edu//~johnhew//str
         
    The path to a new directory containing the results of the experiment will be in the first few lines of the logging output of the script. Once you go there, you can see dev-pred*.png: some distance matrices printed by the script, as well as files containing the quantitative reporting results, like `dev.uuas`, the unlabeled undirected attachment score. These will all be very low, since the probe was trained on very little data!
 
+1. Run an experiment using graph as input!
+
+        python structural-probes/run_experiment.py example/config/graph.yaml
+    In `example/config/graph.yaml`:
+    - `adj_matrix`: adj matrix of graph saved in numpy-format file
+    - `embeddings`: embeddings matrix of graph saved in numpy-format file  
+
 ## Run a pretrained structural probe on `BERT-large` quickly on the command line.
 
 It's easy to get predictions on a sentence (or file of sentences) using our demo script and the pre-trained structural probes we release. We use `pytorch-pretrained-bert` to get BERT subword embeddings for each sentence; it should be installed during setup of the repository.

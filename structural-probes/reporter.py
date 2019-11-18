@@ -72,8 +72,8 @@ class WordPairReporter(Reporter):
     self.reporting_methods = args['reporting']['reporting_methods']
     self.reporting_method_dict = {
         'spearmanr': self.report_spearmanr,
-        'image_examples':self.report_image_examples,
-        'uuas':self.report_uuas_and_tikz,
+        #'image_examples':self.report_image_examples,
+        #'uuas':self.report_uuas_and_tikz,
         'write_predictions':self.write_json
         }
     self.reporting_root = args['reporting']['root']
@@ -102,7 +102,7 @@ class WordPairReporter(Reporter):
       for prediction, label, length, (observation, _) in zip(
           prediction_batch, label_batch,
           length_batch, observation_batch):
-        words = observation.sentence
+        #words = observation.sentence
         length = int(length)
         prediction = prediction[:length,:length]
         label = label[:length,:length].cpu()

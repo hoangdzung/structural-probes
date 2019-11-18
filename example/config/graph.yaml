@@ -17,7 +17,7 @@ dataset:
 model:
   hidden_dim: 1024 # ELMo hidden dim
   #embedding_dim: 1024 # ELMo word embedding dim
-  model_type: ELMo-disk # BERT-disk, ELMo-disk, 
+  model_type: Graph-disk # BERT-disk, ELMo-disk, 
   use_disk: True
   model_layer: 2 # BERT-base: {1,...,12}; ELMo: {1,2,3}
 probe:

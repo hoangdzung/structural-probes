@@ -15,7 +15,7 @@ dataset:
   embeddings: example/data/xcora.npy
   batch_size: 1
 model:
-  hidden_dim: 1024 # ELMo hidden dim
+  hidden_dim: 1433 # ELMo hidden dim
   #embedding_dim: 1024 # ELMo word embedding dim
   model_type: Graph-disk # BERT-disk, ELMo-disk, 
   use_disk: True

@@ -5,3 +5,6 @@ PyYAML
 numpy
 h5py
 tqdm
+gensim
+networkx
+scikit-learn

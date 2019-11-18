@@ -14,6 +14,9 @@ import torch
 import torch.nn as nn
 import h5py
 
+import networkx as nx 
+from sklearn.model_selection import train_test_split
+from gensim.models import KeyedVectors
 
 class SimpleDataset:
   """Reads conllx files to provide PyTorch Dataloaders
@@ -436,3 +439,90 @@ class ObservationIterator(Dataset):
   def __getitem__(self, idx):
     return self.observations[idx], self.labels[idx]
 
+class NodeObservationIterator(Dataset):
+  """ List Container for lists of Observations and labels for them.
+
+  Used as the iterator for a PyTorch dataloader.
+  """
+
+  def __init__(self, observations, task=None):
+    self.observations = observations
+
+  def __len__(self):
+    return len(self.observations)
+
+  def __getitem__(self, idx):
+    return self.observations[idx], self.observations[idx].length_matrix
+
+class GraphDataset(SimpleDataset):
+  def __init__(self, args, task=None, vocab={}):
+    self.args = args
+    self.batch_size = 1 ### Train full-batch because we just have one graph
+    self.use_disk_embeddings = True 
+    self.vocab = vocab
+    self.observation_class = self.get_observation_class(self.args['dataset']['observation_fieldnames'])
+    self.train_obs, self.dev_obs, self.test_obs = self.read_from_disk()
+    self.train_dataset = NodeObservationIterator(self.train_obs, task)
+    self.dev_dataset = NodeObservationIterator(self.dev_obs, task)
+    self.test_dataset = NodeObservationIterator(self.test_obs, task)
+
+  def read_from_disk(self):
+    '''Reads observations from graph files
+    
+    as specified by the yaml arguments dictionary and 
+    optionally adds pre-constructed embeddings for them.
+
+    Returns:
+      A 3-tuple: (train, dev, test) where each element in the
+      tuple is a list of Observations for that split of the dataset. 
+    '''
+    adj = np.load(self.args['dataset']['adj_matrix'])
+
+    G = nx.from_numpy_matrix(adj)
+    
+    print("Find minimun route...")
+    length = dict(nx.all_pairs_shortest_path_length(G))
+    print("Done\nFind the largest connected component...")
+    largest_cc = list(max(nx.connected_components(G), key=len))
+    print("Done")
+
+    train_nodes, dev_nodes = train_test_split(largest_cc, test_size=0.4, random_state=0)
+    dev_nodes, test_nodes = train_test_split(dev_nodes, test_size=0.5, random_state=0)
+
+    train_length = np.zeros((len(train_nodes), len(train_nodes)))
+    dev_length = np.zeros((len(dev_nodes), len(dev_nodes)))
+    test_length = np.zeros((len(test_nodes), len(test_nodes)))
+
+    for i, node_i in tqdm(enumerate(sorted(train_nodes)), desc='train length'):
+      for j, node_j in enumerate(sorted(train_nodes)):
+        train_length[i][j] = length[node_i][node_j]
+
+    for i, node_i in tqdm(enumerate(sorted(dev_nodes)), desc='dev length'):
+      for j, node_j in enumerate(sorted(dev_nodes)):
+        dev_length[i][j] = length[node_i][node_j]
+
+    for i, node_i in tqdm(enumerate(sorted(test_nodes)), desc='test length'):
+      for j, node_j in enumerate(sorted(test_nodes)):
+        test_length[i][j] = length[node_i][node_j]
+        
+    embeddings = np.load(self.args['dataset']['embeddings'])
+    train_embeddings = embeddings[train_nodes]
+    dev_embeddings = embeddings[dev_nodes]
+    test_embeddings = embeddings[test_nodes]
+
+    train_observations = [self.observation_class(train_length, train_embeddings)]
+    dev_observations = [self.observation_class(dev_length, dev_embeddings)]
+    test_observations = [self.observation_class(test_length, test_embeddings)]
+
+    return train_observations, dev_observations, test_observations
+
+if __name__ == '__main__':
+  args = dict()
+  args['dataset'] = {'adj_matrix':'example/data/adjcora.npy', \
+    'embeddings':'example/data/xcora.npy',\
+    'observation_fieldnames':['length_matrix', 'embeddings']}
+  args['device'] = 'cpu'
+  dataset = GraphDataset(args)
+  train_dataset = dataset.get_train_dataloader()
+  for batch in train_dataset:
+    print(batch)
